@@ -29,7 +29,7 @@ fun ClockScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Clock(Modifier.fillMaxSize())
+        Clock(Modifier.fillMaxSize(0.7f))
     }
 }
 

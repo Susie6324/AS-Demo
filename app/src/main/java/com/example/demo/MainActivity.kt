@@ -30,6 +30,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.demo.ui.theme.DemoTheme
 import com.example.demo.screen.MainScreen
 import com.example.demo.screen.ClockScreen
+import com.example.demo.screen.TimerScreen
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
@@ -37,6 +38,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.with
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalAnimationApi::class)
@@ -45,92 +52,65 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DemoTheme {
-                var currentScreen by remember { mutableStateOf("main") }
-                var previousScreen by remember { mutableStateOf("main") }
+                var currentScreen by remember { mutableStateOf(1) }
+                var previousScreen by remember { mutableStateOf(1) }
 
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
-                            .padding(12.dp)
                             .weight(1f)
                             .fillMaxWidth()
                     ) {
                         AnimatedContent(
                             targetState = currentScreen, transitionSpec = {
-                                if (previousScreen == "main" && targetState == "clock") {
+                                if (previousScreen < targetState) {
                                     slideInHorizontally { it } with slideOutHorizontally { -it }
                                 } else {
                                     slideInHorizontally { -it } with slideOutHorizontally { it }
                                 }
                             }) { screen ->
                             when (screen) {
-                                "main" -> MainScreen()
-                                "clock" -> ClockScreen()
+                                1 -> MainScreen()
+                                2 -> ClockScreen()
+                                3 -> TimerScreen()
                             }
                         }
                     }
 
                     Divider(thickness = 1.dp, color = Color.Gray)
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(5.dp)
+                            .navigationBarsPadding(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Button(onClick = {
-                            currentScreen = "main"
-                            previousScreen = "clock"
-                        }) {
-                            Text("Main")
-                        }
-                        Button(onClick = {
-                            currentScreen = "clock"
-                            previousScreen = "main"
-                        }) {
-                            Text("Clock")
+                        val items = listOf(
+                            Triple(1, "主页", Icons.Default.Home),
+                            Triple(2, "时钟", Icons.Default.DateRange),
+                            Triple(3, "计时", Icons.Default.Info)
+                        )
+
+                        items.forEach { (route, label, icon) ->
+                            val selected = currentScreen == route
+                            val color = if (selected) Color.Gray else Color.Black
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .clickable(enabled = !selected) {
+                                        previousScreen = currentScreen
+                                        currentScreen = route
+                                    }
+                                    .padding(8.dp)
+                            ) {
+                                Icon(imageVector = icon, contentDescription = label, tint = color)
+                                Text(text = label, color = color, fontSize = 12.sp)
+                            }
                         }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun BottomNavigationBar(navController: NavHostController) {
-    val items = listOf(
-        NavItem("main", "主页", Icons.Default.Home),
-        NavItem("clock", "时钟", Icons.Default.DateRange)
-    )
-    NavigationBar {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
-        items.forEach { item ->
-            NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = item.label) },
-                label = { Text(item.label) },
-                selected = currentRoute == item.route,
-                onClick = {
-                    if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                })
-        }
-    }
-}
-
-data class NavItem(
-    val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector
-)
-
-@Composable
-fun NavigationGraph(navController: NavHostController, modifier: Modifier = Modifier) {
-    NavHost(navController = navController, startDestination = "main", modifier = modifier) {
-        composable("main") { MainScreen() }
-        composable("clock") { ClockScreen() }
     }
 }
