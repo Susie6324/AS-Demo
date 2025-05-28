@@ -4,38 +4,91 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.*
+import androidx.navigation.compose.rememberNavController
 import com.example.demo.ui.theme.DemoTheme
-import kotlinx.coroutines.delay
-import java.text.SimpleDateFormat
-import android.content.Intent
-import java.util.*
+import com.example.demo.screen.MainScreen
+import com.example.demo.screen.ClockScreen
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.with
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             DemoTheme {
-                Scaffold(bottomBar = { NavigatorBar() })
-                { innerPadding ->
-                    Column(
+                var currentScreen by remember { mutableStateOf("main") }
+                var previousScreen by remember { mutableStateOf("main") }
+
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .padding(12.dp)
+                            .weight(1f)
+                            .fillMaxWidth()
                     ) {
-                        SwitchClock()
+                        AnimatedContent(
+                            targetState = currentScreen, transitionSpec = {
+                                if (previousScreen == "main" && targetState == "clock") {
+                                    slideInHorizontally { it } with slideOutHorizontally { -it }
+                                } else {
+                                    slideInHorizontally { -it } with slideOutHorizontally { it }
+                                }
+                            }) { screen ->
+                            when (screen) {
+                                "main" -> MainScreen()
+                                "clock" -> ClockScreen()
+                            }
+                        }
+                    }
+
+                    Divider(thickness = 1.dp, color = Color.Gray)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Button(onClick = {
+                            currentScreen = "main"
+                            previousScreen = "clock"
+                        }) {
+                            Text("Main")
+                        }
+                        Button(onClick = {
+                            currentScreen = "clock"
+                            previousScreen = "main"
+                        }) {
+                            Text("Clock")
+                        }
                     }
                 }
             }
@@ -43,86 +96,41 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
-fun SwitchClock() {
-    var show24 by remember { mutableStateOf(true) }
-
-    Column(
-//        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        DigitalClock(show24 = show24)
-        Spacer(modifier = Modifier.height(2.dp))
-        Button(onClick = { show24 = !show24 }) {
-            Text(text = if (show24) "12 hours" else "24 hours")
+fun BottomNavigationBar(navController: NavHostController) {
+    val items = listOf(
+        NavItem("main", "主页", Icons.Default.Home),
+        NavItem("clock", "时钟", Icons.Default.DateRange)
+    )
+    NavigationBar {
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+        items.forEach { item ->
+            NavigationBarItem(
+                icon = { Icon(item.icon, contentDescription = item.label) },
+                label = { Text(item.label) },
+                selected = currentRoute == item.route,
+                onClick = {
+                    if (currentRoute != item.route) {
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                })
         }
     }
 }
 
+data class NavItem(
+    val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
 @Composable
-fun DigitalClock(show24: Boolean = true) {
-    var timeString by remember { mutableStateOf("") }
-    val timeFormat = remember(show24) {
-        SimpleDateFormat(if (show24) "HH:mm:ss" else "hh:mm:ss a", Locale.getDefault())
-    }
-
-    LaunchedEffect(key1 = show24) {
-        while (true) {
-            timeString = timeFormat.format(Date())
-            delay(1000)
-        }
-    }
-
-    val (time, noon) = if(!show24) {
-        val split = timeString.split(" ")
-        Pair(split.getOrElse(0) { "" }, split.getOrElse(1) { "" })
-    } else {
-        Pair(timeString, "")
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = time,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.DarkGray
-            )
-            Text(
-                text = noon,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (noon == "AM") {Color.Red} else {Color.Blue}
-            )
-        }
+fun NavigationGraph(navController: NavHostController, modifier: Modifier = Modifier) {
+    NavHost(navController = navController, startDestination = "main", modifier = modifier) {
+        composable("main") { MainScreen() }
+        composable("clock") { ClockScreen() }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun DigitalClockPreview() {
-    DemoTheme {
-        SwitchClock()
-    }
-}
-
-//@Composable
-//fun Greeting(name: String, modifier: Modifier = Modifier) {
-//    Text(
-//        text = "Hello $name!",
-//        modifier = modifier
-//    )
-//}
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun GreetingPreview() {
-//    DemoTheme {
-//        Greeting("Android")
-//    }
-//}
