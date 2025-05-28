@@ -22,8 +22,8 @@ fun TimerScreen() {
 
     LaunchedEffect(isRunning) {
         while (isRunning) {
-            delay(10)
             timeMillis += 10
+            delay(10)
         }
     }
 
@@ -57,9 +57,6 @@ fun TimerScreen() {
             Button(
                 onClick = {
                     timeMillis = 0L
-                    if (isRunning) {
-                        timeMillis = -10L
-                    }
                     isRunning = false
                 },
                 colors = ButtonDefaults.buttonColors(

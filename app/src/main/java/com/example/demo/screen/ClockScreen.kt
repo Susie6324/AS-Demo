@@ -47,7 +47,6 @@ fun Clock(modifier: Modifier = Modifier) {
     val minute = currentTime.get(Calendar.MINUTE)
     val second = currentTime.get(Calendar.SECOND)
     val millis = currentTime.get(Calendar.MILLISECOND)
-    val smoothSecond = second + millis / 1000f
 
     Canvas(modifier = modifier) {
         val radius = size.minDimension / 2
@@ -103,7 +102,7 @@ fun Clock(modifier: Modifier = Modifier) {
             strokeWidth = 6f
         )
 
-        val angleRad = Math.toRadians((smoothSecond * 6f - 90).toDouble())
+        val angleRad = Math.toRadians(((second + millis / 1000f) * 6f - 90).toDouble())
         drawLine(
             color = Color.Red,
             start = center,

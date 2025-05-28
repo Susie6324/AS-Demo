@@ -61,7 +61,7 @@ fun DigitalClock(show24: Boolean = true) {
         SimpleDateFormat(if (show24) "HH:mm:ss" else "hh:mm:ss a", Locale.getDefault())
     }
 
-    LaunchedEffect(key1 = show24) {
+    LaunchedEffect(show24) {
         while (true) {
             timeString = timeFormat.format(Date())
             delay(1000)
