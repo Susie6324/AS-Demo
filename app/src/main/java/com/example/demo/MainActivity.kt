@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.example.demo.ui.theme.DemoTheme
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
+import android.content.Intent
 import java.util.*
 
 class MainActivity : ComponentActivity() {
@@ -25,11 +26,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DemoTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    SwitchClock()
+                Scaffold(bottomBar = { NavigatorBar() })
+                { innerPadding ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        SwitchClock()
+                    }
                 }
             }
         }
@@ -42,7 +49,7 @@ fun SwitchClock() {
     var show24 by remember { mutableStateOf(true) }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+//        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -104,18 +111,18 @@ fun DigitalClockPreview() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DemoTheme {
-        Greeting("Android")
-    }
-}
+//@Composable
+//fun Greeting(name: String, modifier: Modifier = Modifier) {
+//    Text(
+//        text = "Hello $name!",
+//        modifier = modifier
+//    )
+//}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun GreetingPreview() {
+//    DemoTheme {
+//        Greeting("Android")
+//    }
+//}
